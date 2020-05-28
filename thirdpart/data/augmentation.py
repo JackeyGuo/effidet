@@ -34,10 +34,10 @@ def get_augmentation(phase, width=512, height=512, min_area=0., min_visibility=0
                                         sat_shift_limit=5),
                 albu.NoOp()
             ]),
-            albu.ChannelShuffle(p=0.5),
-            albu.CoarseDropout(max_holes=8, max_height=30, max_width=30, p=0.3),
+            # albu.ChannelShuffle(p=0.5),
+            # albu.CoarseDropout(max_holes=8, max_height=30, max_width=30, p=0.3),
             # albu.CLAHE(p=0.5),
-            albu.GaussNoise(p=0.5),
+            # albu.GaussNoise(p=0.5),
             albu.MedianBlur(blur_limit=5, p=0.3)
             # # 水平翻转
             # albu.HorizontalFlip(p=0.5),
