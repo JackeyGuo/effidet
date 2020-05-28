@@ -50,15 +50,12 @@ def get_augmentation(phase, width=512, height=512, min_area=0., min_visibility=0
     list_transforms.extend([
         albu.Normalize(mean=(0.485, 0.456, 0.406),
                        std=(0.229, 0.224, 0.225), p=1),
-        # albu.Normalize(mean=(0.621247, 0.437153, 0.406354),
-        #                std=(0.169446, 0.154287, 0.151743), p=1),
         ToTensorV2()
     ])
     if (phase == 'test'):
         return albu.Compose(list_transforms)
     return albu.Compose(list_transforms, bbox_params=albu.BboxParams(
         format='pascal_voc', min_area=min_area, min_visibility=min_visibility, label_fields=['category_id']))
-
 
 
 def detection_collate(batch):
@@ -139,36 +136,11 @@ class ResizerTest(object):
         return {'img': torch.from_numpy(new_image), 'scale': scale}
 
 
-class Augmenter(object):
-    """Convert ndarrays in sample to Tensors."""
-
-    def __call__(self, sample, flip_x=0.5):
-        if np.random.rand() < flip_x:
-            image, annots = sample['img'], sample['annot']
-            image = image[:, ::-1, :]
-
-            rows, cols, channels = image.shape
-
-            x1 = annots[:, 0].copy()
-            x2 = annots[:, 2].copy()
-
-            x_tmp = x1.copy()
-
-            annots[:, 0] = cols - x2
-            annots[:, 2] = cols - x_tmp
-
-            sample = {'img': image, 'annot': annots}
-
-        return sample
-
-
 class Normalizer(object):
 
     def __init__(self):
         self.mean = np.array([[[0.485, 0.456, 0.406]]])
         self.std = np.array([[[0.229, 0.224, 0.225]]])
-        # self.mean = np.array([[[0.621247, 0.437153, 0.406354]]])
-        # self.std = np.array([[[0.169446, 0.154287, 0.151743]]])
 
     def __call__(self, sample):
         image, annots = sample['img'], sample['annot']
@@ -179,8 +151,8 @@ class Normalizer(object):
 class NormalizerTest(object):
 
     def __init__(self):
-        self.mean = np.array([[[0.621247, 0.437153, 0.406354]]])
-        self.std = np.array([[[0.169446, 0.154287, 0.151743]]])
+        self.mean = np.array([[[0.485, 0.456, 0.406]]])
+        self.std = np.array([[[0.229, 0.224, 0.225]]])
 
     def __call__(self, sample):
         image = sample['img']

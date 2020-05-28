@@ -6,6 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 
 TRAIN_ROOT_PATH = '../input/global-wheat-detection/train'
+TEST_ROOT_PATH = '../input/global-wheat-detection/test'
 
 
 class DatasetRetriever(Dataset):
@@ -112,41 +113,24 @@ class DatasetRetriever(Dataset):
         return result_image, result_boxes
 
 
-class Resizer(object):
-    """Convert ndarrays in sample to Tensors."""
-    
-    def __init__(self, img_size=512):
-        self.img_size = img_size
+class DatasetRetrieverTest(Dataset):
 
-    def __call__(self, sample):
-        image, annots = sample['img'], sample['annot']
-        height, width, _ = image.shape
-        if height > width:
-            scale = self.img_size / height
-            resized_height = self.img_size
-            resized_width = int(width * scale)
-        else:
-            scale = self.img_size / width
-            resized_height = int(height * scale)
-            resized_width = self.img_size
+    def __init__(self, image_ids, transforms=None):
+        super().__init__()
+        self.image_ids = image_ids
+        self.transforms = transforms
 
-        image = cv2.resize(image, (resized_width, resized_height), interpolation=cv2.INTER_LINEAR)
+    def __getitem__(self, index: int):
+        image_id = self.image_ids[index]
+        image = cv2.imread(f'{TEST_ROOT_PATH}/{image_id}.jpg', cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
+        image /= 255.0
 
-        new_image = np.zeros((self.img_size, self.img_size, 3))
-        new_image[0:resized_height, 0:resized_width] = image
+        sample = {'img': image}
+        if self.transforms:
+            sample = self.transforms(sample)
 
-        annots[:, :4] *= scale
+        return sample
 
-        return {'img': torch.from_numpy(new_image).to(torch.float32), 'annot': torch.from_numpy(annots), 'scale': scale}
-
-
-class Normalizer(object):
-
-    def __init__(self, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
-        self.mean = np.array([[mean]])
-        self.std = np.array([[std]])
-
-    def __call__(self, sample):
-        image, annots = sample['img'], sample['annot']
-
-        return {'img': ((image.astype(np.float32) - self.mean) / self.std), 'annot': annots}
+    def __len__(self) -> int:
+        return self.image_ids.shape[0]
