@@ -1,7 +1,7 @@
-compound_coef = 2
-image_size = None
+compound_coef = 4
+image_size = 640
 num_workers = 8
-batch_size = 8
+batch_size = 3
 
 # Optimizer parameters
 opt = 'lookahead_radam'
