@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import torch
-from torchvision.ops import nms
+from torchvision.ops.boxes import batched_nms
 from typing import Union
 from torch.nn.init import _calculate_fan_in_and_fan_out, _no_grad_normal_
 
@@ -83,10 +83,11 @@ def postprocess(x, anchors, regression, classification, regressBoxes, clipBoxes,
         classification_per = classification[i, scores_over_thresh[i, :], ...].permute(1, 0)
         transformed_anchors_per = transformed_anchors[i, scores_over_thresh[i, :], ...]
         scores_per = scores[i, scores_over_thresh[i, :], ...]
-        anchors_nms_idx = nms(transformed_anchors_per, scores_per[:, 0], iou_threshold=iou_threshold)
-
+        scores_, classes_ = classification_per.max(dim=0)
+        anchors_nms_idx = batched_nms(transformed_anchors_per, scores_per[:, 0], classes_, iou_threshold=iou_threshold)
         if anchors_nms_idx.shape[0] != 0:
-            scores_, classes_ = classification_per[:, anchors_nms_idx].max(dim=0)
+            classes_ = classes_[anchors_nms_idx]
+            scores_ = scores_[anchors_nms_idx]
             boxes_ = transformed_anchors_per[anchors_nms_idx, :]
 
             out.append({
@@ -103,13 +104,31 @@ def postprocess(x, anchors, regression, classification, regressBoxes, clipBoxes,
 
     return out
 
-# def variance_scaling_(tensor, gain=1.):
-#     # type: (Tensor, float) -> Tensor
-#     r"""
-#     initializer for SeparableConv in Regressor/Classifier
-#     reference: https://keras.io/zh/initializers/  VarianceScaling
-#     """
-#     fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
-#     std = math.sqrt(gain / float(fan_in))
-#
-#     return _no_grad_normal_(tensor, 0., std)
+
+class PrefetchLoader:
+
+    def __init__(self, loader):
+        self.loader = loader
+
+    def __iter__(self):
+        stream = torch.cuda.Stream()
+        first = True
+
+        for next_input in self.loader:
+            with torch.cuda.stream(stream):
+                next_input['img'] = next_input['img'].cuda(non_blocking=True).float()
+                next_input['annot'] = next_input['annot'].cuda(non_blocking=True)
+                next_input['scale'] = next_input['scale'].cuda(non_blocking=True)
+
+            if not first:
+                yield input
+            else:
+                first = False
+
+            torch.cuda.current_stream().wait_stream(stream)
+            input = next_input
+
+        yield input
+
+    def __len__(self):
+        return len(self.loader)

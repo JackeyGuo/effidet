@@ -4,60 +4,6 @@ import torch
 import numpy as np
 import cv2
 
-
-def get_augmentation(phase, width=512, height=512, min_area=0., min_visibility=0.):
-    list_transforms = []
-
-    if phase == 'train':
-        list_transforms.extend([
-            # albu.LongestMaxSize(
-            #     max_size=width, always_apply=True),
-            # albu.PadIfNeeded(min_height=height, min_width=width,
-            #                  always_apply=True, border_mode=0, value=[0, 0, 0]),
-            albu.RandomResizedCrop(
-                height=height, width=width, p=1),
-            albu.Rotate(limit=(-20, 20), p=0.5),
-            # Flip the input either horizontally, vertically or both horizontally and vertically.
-            albu.Flip(),
-            # Transpose the input by swapping rows and columns.
-            albu.Transpose(),
-            albu.OneOf([
-                albu.RandomBrightnessContrast(brightness_limit=0.3,
-                                              contrast_limit=0.3),
-                albu.RandomGamma(gamma_limit=(50, 150)),
-                albu.NoOp()
-            ]),
-            albu.OneOf([
-                albu.RGBShift(r_shift_limit=20, b_shift_limit=15,
-                              g_shift_limit=15),
-                albu.HueSaturationValue(hue_shift_limit=5,
-                                        sat_shift_limit=5),
-                albu.NoOp()
-            ]),
-            # albu.ChannelShuffle(p=0.5),
-            # albu.CoarseDropout(max_holes=8, max_height=30, max_width=30, p=0.3),
-            # albu.CLAHE(p=0.5),
-            # albu.GaussNoise(p=0.5),
-            albu.MedianBlur(blur_limit=5, p=0.3)
-            # # 水平翻转
-            # albu.HorizontalFlip(p=0.5),
-            # albu.VerticalFlip(p=0.5),
-        ])
-    if (phase == 'test' or phase == 'valid'):
-        list_transforms.extend([
-            albu.Resize(height=height, width=width)
-        ])
-    list_transforms.extend([
-        albu.Normalize(mean=(0.485, 0.456, 0.406),
-                       std=(0.229, 0.224, 0.225), p=1),
-        ToTensorV2()
-    ])
-    if (phase == 'test'):
-        return albu.Compose(list_transforms)
-    return albu.Compose(list_transforms, bbox_params=albu.BboxParams(
-        format='pascal_voc', min_area=min_area, min_visibility=min_visibility, label_fields=['category_id']))
-
-
 def detection_collate(batch):
     imgs = [s['img'] for s in batch]
     annots = [s['bboxes'] for s in batch]
