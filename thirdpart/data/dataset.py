@@ -64,6 +64,7 @@ class DatasetRetriever(Dataset):
         boxes = records[['x', 'y', 'w', 'h']].values
         boxes[:, 2] = boxes[:, 0] + boxes[:, 2]
         boxes[:, 3] = boxes[:, 1] + boxes[:, 3]
+
         return image, boxes
 
     def load_cutmix_image_and_boxes(self, index, imsize=1024):
@@ -73,7 +74,7 @@ class DatasetRetriever(Dataset):
         """
         w, h = imsize, imsize
         s = imsize // 2
-
+        print(w,h)
         xc, yc = [int(random.uniform(imsize * 0.25, imsize * 0.75)) for _ in range(2)]  # center x, y
         indexes = [index] + [random.randint(0, self.image_ids.shape[0] - 1) for _ in range(3)]
 
@@ -110,6 +111,8 @@ class DatasetRetriever(Dataset):
         result_boxes = result_boxes.astype(np.int32)
         result_boxes = result_boxes[
             np.where((result_boxes[:, 2] - result_boxes[:, 0]) * (result_boxes[:, 3] - result_boxes[:, 1]) > 0)]
+        cv2.imwrite('/home/guofeng/otherProject/new-effdet/efficientdet-kaggle-kernel/output/test.jpg', result_image*255)
+
         return result_image, result_boxes
 
 

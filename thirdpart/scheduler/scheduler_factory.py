@@ -1,7 +1,7 @@
 from .cosine_lr import CosineLRScheduler
 from .tanh_lr import TanhLRScheduler
 from .step_lr import StepLRScheduler
-
+from .plateau_lr import PlateauLRScheduler
 
 def create_scheduler(args, optimizer):
     num_epochs = args.num_epochs
@@ -39,5 +39,15 @@ def create_scheduler(args, optimizer):
             decay_rate=args.decay_rate,
             warmup_lr_init=args.warmup_lr,
             warmup_t=args.warmup_epochs,
+        )
+    elif args.sched == 'plateau':
+        lr_scheduler = PlateauLRScheduler(
+            optimizer,
+            decay_rate=args.decay_rate,
+            patience_t=args.patience_epochs,
+            lr_min=args.min_lr,
+            warmup_lr_init=args.warmup_lr,
+            warmup_t=args.warmup_epochs,
+            cooldown_t=args.cooldown_epochs,
         )
     return lr_scheduler, num_epochs
