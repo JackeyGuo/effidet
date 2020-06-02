@@ -74,7 +74,7 @@ class DatasetRetriever(Dataset):
         """
         w, h = imsize, imsize
         s = imsize // 2
-        print(w,h)
+
         xc, yc = [int(random.uniform(imsize * 0.25, imsize * 0.75)) for _ in range(2)]  # center x, y
         indexes = [index] + [random.randint(0, self.image_ids.shape[0] - 1) for _ in range(3)]
 
@@ -111,7 +111,18 @@ class DatasetRetriever(Dataset):
         result_boxes = result_boxes.astype(np.int32)
         result_boxes = result_boxes[
             np.where((result_boxes[:, 2] - result_boxes[:, 0]) * (result_boxes[:, 3] - result_boxes[:, 1]) > 0)]
-        cv2.imwrite('/home/guofeng/otherProject/new-effdet/efficientdet-kaggle-kernel/output/test.jpg', result_image*255)
+
+        # import matplotlib.pyplot as plt
+        # fig, ax = plt.subplots(1, 1, figsize=(16, 8))
+        #
+        # for box in result_boxes:
+        #     cv2.rectangle(result_image, (box[0], box[1]), (box[2], box[3]), (1, 0, 0), 1)
+        #
+        # ax.set_axis_off()
+        # ax.imshow(result_image)
+        #
+        # cv2.imwrite('/home/guofeng/otherProject/new-effdet/efficientdet-kaggle-kernel/output/test.jpg',
+        #             result_image * 255)
 
         return result_image, result_boxes
 
